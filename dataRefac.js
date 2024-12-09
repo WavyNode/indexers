@@ -21,20 +21,20 @@ const contracts = {
     addresses: {
       mainnet: "0xA0b86991C6218B36c1d19D4a2e9Eb0cE3606eB48",
     },
-    events: ["Blacklist"],
+    events: ["Blacklisted"],
   },
   USDT: {
     abi: usdtAbi,
     addresses: {
       mainnet: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     },
-    events: ["Blacklist"],
+    events: ["AddedBlackList"],
   },
 };
 
 // Proveedor RPC
 const provider = new ethers.providers.JsonRpcProvider(
-  "http://192.168.100.42:8549"
+  "https://arb-rpc.wavynode.com"
 );
 
 // Crear filtros de eventos
@@ -88,7 +88,7 @@ function validateData(data) {
 }
 
 // Guardar eventos en Supabase por lotes
-async function saveToSupabaseInBatches(data, batchSize = 500) {
+async function saveToSupabaseInBatches(data, batchSize = 100) {
   const validData = validateData(data);
   if (!validData.length) {
     console.log("No hay datos válidos para insertar.");

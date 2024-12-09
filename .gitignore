@@ -3,3 +3,5 @@ node_modules/
 
 # Ignorar supabase.js
 supabase.js
+
+indexer.code-workspace

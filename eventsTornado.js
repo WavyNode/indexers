@@ -57,7 +57,7 @@ async function queryTornadoCashEvents(contractAddress) {
             return data;
           });
 
-          await saveToSupabaseInBatches(customData);
+          await saveToSupabaseInBatches(eventsTornado);
         }
       } catch (error) {
         console.error(
@@ -106,7 +106,7 @@ async function queryTornadoCashEvents(contractAddress) {
               return data;
             });
 
-            await saveToSupabaseInBatches(customData);
+            await saveToSupabaseInBatches(eventsTornado);
           }
         }
       } catch (error) {
