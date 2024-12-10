@@ -23,7 +23,6 @@ async function queryTornadoCashEvents(contractAddress) {
     const targetBlock = 281881304; // Bloque objetivo inicial
     const events = ["Deposit", "Withdrawal"];
 
-    // Buscar eventos hasta el bloque objetivo
     for (const eventName of events) {
       try {
         const eventFilter = contract.filters[eventName]();
@@ -37,62 +36,16 @@ async function queryTornadoCashEvents(contractAddress) {
         );
 
         if (queriedEvents.length > 0) {
-          const customData = queriedEvents.map((event) => {
-            const data = {
-              contract: contractAddress,
-              eventType: eventName,
-              recipient: event.args?.to || event.args?.recipient || null,
-              txHash: event.transactionHash,
-              block: event.blockNumber,
-            };
-
-            if (eventName === "Deposit") {
-              data.sender = event.args?.from || event.args?.account || null;
-              data.amount =
-                event.args?.amount?.toString() ||
-                event.args?.value?.toString() ||
-                null;
-            }
-
-            return data;
-          });
-
-          await saveToSupabaseInBatches(eventsTornado);
-        }
-      } catch (error) {
-        console.error(
-          `Error al consultar eventos ${eventName} para TornadoCash (${contractAddress}): ${error.message}`
-        );
-      }
-    }
-
-    // Continuar escuchando nuevos eventos después del bloque objetivo
-    provider.on("block", async (blockNumber) => {
-      console.log(`Nuevo bloque detectado: ${blockNumber}`);
-      try {
-        for (const eventName of events) {
-          const eventFilter = contract.filters[eventName]();
-          const queriedEvents = await contract.queryFilter(
-            eventFilter,
-            targetBlock + 1,
-            blockNumber
-          );
-          console.log(
-            `Se encontraron ${
-              queriedEvents.length
-            } nuevos eventos de ${eventName} en TornadoCash (${contractAddress}) desde el bloque ${
-              targetBlock + 1
-            } hasta el bloque ${blockNumber}.`
-          );
-
-          if (queriedEvents.length > 0) {
-            const customData = queriedEvents.map((event) => {
+          const customData = await Promise.all(
+            queriedEvents.map(async (event) => {
+              const block = await provider.getBlock(event.blockNumber);
               const data = {
                 contract: contractAddress,
                 eventType: eventName,
                 recipient: event.args?.to || event.args?.recipient || null,
                 txHash: event.transactionHash,
                 block: event.blockNumber,
+                timestamp: block.timestamp,
               };
 
               if (eventName === "Deposit") {
@@ -104,18 +57,17 @@ async function queryTornadoCashEvents(contractAddress) {
               }
 
               return data;
-            });
+            })
+          );
 
-            await saveToSupabaseInBatches(eventsTornado);
-          }
+          await saveToSupabaseInBatches(customData);
         }
       } catch (error) {
         console.error(
-          `Error al consultar nuevos eventos para TornadoCash (${contractAddress}): ${error.message}`
+          `Error al consultar eventos ${eventName} para TornadoCash (${contractAddress}): ${error.message}`
         );
-        console.log(`Último bloque procesado: ${blockNumber}`);
       }
-    });
+    }
   } catch (error) {
     console.error(
       `Error al consultar eventos para TornadoCash (${contractAddress}): ${error.message}`
@@ -155,7 +107,13 @@ async function saveToSupabaseInBatches(data, batchSize = 500) {
 // Validar datos antes de la inserción
 function validateData(data) {
   return data.filter((item) => {
-    if (!item.contract || !item.eventType || !item.txHash || !item.block) {
+    if (
+      !item.contract ||
+      !item.eventType ||
+      !item.txHash ||
+      !item.block ||
+      !item.timestamp
+    ) {
       console.error("Datos inválidos encontrados:", item);
       return false;
     }
