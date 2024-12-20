@@ -20,7 +20,7 @@ async function queryTornadoCashEvents(contractAddress) {
       tornadocashAbi,
       provider
     );
-    const targetBlock = 281881304; // Bloque objetivo inicial
+    const targetBlock = 281881304;
     const events = ["Deposit", "Withdrawal"];
 
     for (const eventName of events) {
@@ -60,7 +60,7 @@ async function queryTornadoCashEvents(contractAddress) {
             })
           );
 
-          await saveToSupabaseInBatches(customData);
+          await saveToSupabaseInBatches();
         }
       } catch (error) {
         console.error(
@@ -76,7 +76,7 @@ async function queryTornadoCashEvents(contractAddress) {
 }
 
 // Guardar eventos en Supabase por lotes
-async function saveToSupabaseInBatches(data, batchSize = 500) {
+async function saveToSupabaseInBatches(data, batchSize = 100) {
   const validData = validateData(data);
   if (!validData.length) {
     console.log("No hay datos válidos para insertar.");
@@ -121,5 +121,4 @@ function validateData(data) {
   });
 }
 
-// Ejecutar para cada contrato TornadoCash
 Object.values(tornadoContracts).forEach(queryTornadoCashEvents);

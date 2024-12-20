@@ -6,14 +6,15 @@ const provider = new ethers.providers.JsonRpcProvider(
   "https://arb-rpc.wavynode.com"
 );
 
-// Dirección del contrato USDC actualizada
+// Updated USDC contract information
 const usdcContract = {
   abi: usdcAbi,
   address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
   events: ["Blacklisted", "UnBlacklisted"],
 };
 
-const endBlock = 283082491; // Bloque final para la búsqueda inicial
+const endBlock = 283082491;
+const chainId = 42161;
 
 async function queryUSDCEvents(contractAddress) {
   try {
@@ -25,12 +26,11 @@ async function queryUSDCEvents(contractAddress) {
     const events = usdcContract.events;
     let latestProcessedBlock = endBlock;
 
-    // Buscar eventos desde el bloque génesis hasta el bloque objetivo
     for (const eventName of events) {
       try {
         const eventFilter = contract.filters[eventName]();
         console.log(
-          `Buscando eventos ${eventName} desde el bloque génesis hasta el bloque ${endBlock}...`
+          `Searching for ${eventName} events from genesis block to block ${endBlock}...`
         );
 
         const queriedEvents = await contract.queryFilter(
@@ -39,30 +39,31 @@ async function queryUSDCEvents(contractAddress) {
           endBlock
         );
         console.log(
-          `Se encontraron ${queriedEvents.length} eventos de ${eventName} hasta el bloque ${endBlock}.`
+          `Found ${queriedEvents.length} ${eventName} events up to block ${endBlock}.`
         );
 
         if (queriedEvents.length > 0) {
           const customData = queriedEvents.map((event) => ({
+            chain_id: chainId,
             contract: contractAddress,
-            eventType: eventName,
-            account: event.args?._account || null,
-            txHash: event.transactionHash,
+            event_type: eventName,
+            address: event.args?._account || null,
+            tx_hash: event.transactionHash,
             block: event.blockNumber,
+            timestamp: new Date(),
+            amount: event.args?._amount || null,
           }));
 
           await saveToSupabaseInBatches(customData);
         }
       } catch (error) {
-        console.error(
-          `Error al consultar eventos ${eventName}: ${error.message}`
-        );
+        console.error(`Error querying ${eventName} events: ${error.message}`);
       }
     }
 
-    // Continuar escuchando nuevos bloques después del bloque objetivo
+    // Continue monitoring new blocks after the target block
     provider.on("block", async (blockNumber) => {
-      console.log(`Nuevo bloque detectado: ${blockNumber}`);
+      console.log(`New block detected: ${blockNumber}`);
       for (const eventName of events) {
         try {
           const eventFilter = contract.filters[eventName]();
@@ -72,78 +73,86 @@ async function queryUSDCEvents(contractAddress) {
             blockNumber
           );
           console.log(
-            `Se encontraron ${
-              queriedEvents.length
-            } nuevos eventos de ${eventName} desde el bloque ${
+            `Found ${queriedEvents.length} new ${eventName} events from block ${
               latestProcessedBlock + 1
-            } hasta el bloque ${blockNumber}.`
+            } to block ${blockNumber}.`
           );
 
           if (queriedEvents.length > 0) {
             const customData = queriedEvents.map((event) => ({
+              chain_id: chainId,
               contract: contractAddress,
-              eventType: eventName,
-              account: event.args?._account || null,
-              txHash: event.transactionHash,
+              event_type: eventName,
+              address: event.args?._account || null,
+              tx_hash: event.transactionHash,
               block: event.blockNumber,
+              timestamp: new Date(), // Adjust if you can fetch exact block timestamp
+              amount: event.args?._amount || null, // Adjust based on your event ABI
             }));
 
             await saveToSupabaseInBatches(customData);
-            latestProcessedBlock = blockNumber; // Actualizar el último bloque procesado
+            latestProcessedBlock = blockNumber;
           }
         } catch (error) {
           console.error(
-            `Error al consultar nuevos eventos ${eventName}: ${error.message}`
+            `Error querying new ${eventName} events: ${error.message}`
           );
         }
       }
     });
   } catch (error) {
     console.error(
-      `Error al consultar eventos para USDC (${contractAddress}): ${error.message}`
+      `Error querying events for USDC (${contractAddress}): ${error.message}`
     );
   }
 }
 
-// Guardar eventos en Supabase por lotes
+// Save events to Supabase in batches
 async function saveToSupabaseInBatches(data, batchSize = 100) {
   const validData = validateData(data);
   if (!validData.length) {
-    console.log("No hay datos válidos para insertar.");
+    console.log("No valid data to insert.");
     return;
   }
 
   for (let i = 0; i < validData.length; i += batchSize) {
     const batch = validData.slice(i, i + batchSize);
     console.log(
-      `Insertando lote ${i / batchSize + 1} de ${Math.ceil(
+      `Inserting batch ${i / batchSize + 1} of ${Math.ceil(
         validData.length / batchSize
-      )} en la tabla eventstornado...`
+      )} into the events table...`
     );
     try {
-      const { error } = await supabase.from("eventstornado").insert(batch);
+      const { error } = await supabase.from("events").insert(batch);
       if (error) {
-        console.error("Error al insertar lote:", error.message);
-        console.error("Datos del lote fallido:", batch);
+        console.error("Error inserting batch:", error.message);
+        console.error("Failed batch data:", batch);
       } else {
-        console.log("¡Lote insertado exitosamente!");
+        console.log("Batch inserted successfully!");
       }
     } catch (error) {
-      console.error("Error inesperado al insertar lote:", error.message);
+      console.error("Unexpected error inserting batch:", error.message);
     }
   }
 }
 
-// Validar datos antes de la inserción
+// Validate data before insertion
 function validateData(data) {
   return data.filter((item) => {
-    if (!item.contract || !item.eventType || !item.txHash || !item.block) {
-      console.error("Datos inválidos encontrados:", item);
+    if (
+      !item.chain_id ||
+      !item.contract ||
+      !item.event_type ||
+      !item.tx_hash ||
+      !item.block ||
+      !item.timestamp
+    ) {
+      console.error("Invalid data found:", item);
       return false;
     }
     return true;
   });
 }
 
-// Ejecutar para el contrato de USDC
+// Run for the USDC contract
 queryUSDCEvents(usdcContract.address);
