@@ -54,7 +54,7 @@ async function queryUSDCEvents(contractAddress) {
             amount: event.args?._amount || null,
           }));
 
-          await saveToSupabaseInBatches(customData);
+          await saveToSupabaseInBatches(events);
         }
       } catch (error) {
         console.error(`Error querying ${eventName} events: ${error.message}`);
@@ -86,8 +86,8 @@ async function queryUSDCEvents(contractAddress) {
               address: event.args?._account || null,
               tx_hash: event.transactionHash,
               block: event.blockNumber,
-              timestamp: new Date(), // Adjust if you can fetch exact block timestamp
-              amount: event.args?._amount || null, // Adjust based on your event ABI
+              timestamp: new Date(),
+              amount: event.args?._amount || null,
             }));
 
             await saveToSupabaseInBatches(customData);
