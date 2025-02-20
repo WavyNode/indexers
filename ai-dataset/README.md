@@ -85,7 +85,7 @@ interface ITx {
 ```
 
 ## Flujo
-![[diagrama de flujo]](diagram.png)
+![[diagrama de flujo]](assets/diagram.png)
 
 # Quickstart (bun.sh)
 To install dependencies:
