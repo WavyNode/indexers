@@ -5,3 +5,5 @@ node_modules/
 supabase.js
 
 indexer.code-workspace
+
+.env
