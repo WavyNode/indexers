@@ -1,11 +1,14 @@
 {
-  "name": "ai-dataset",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+	"name": "ai-dataset",
+	"type": "module",
+	"scripts": {
+		"get-clean-addresses": "bun ./scripts/clean-addresses.ts",
+		"create-dataset": "bun ./scripts/dataset.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5.0.0"
+	}
 }

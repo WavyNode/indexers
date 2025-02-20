@@ -13,6 +13,79 @@
 - Una tabla de test
 - Un archivo csv
 
+#### Esquema del dataset
+```typescript
+interface IDataset {
+    addresses: IAddress[]
+}
+
+interface IAddress {
+    address: string,
+    type: 'clean' | 'dirty',
+    txs: ITx[] // txs.lenght para saber cuántas tiene
+}
+
+interface ITx {
+    txHash: string,
+    block: number,
+    timestamp: number,
+    amount: string,
+    from: string,
+    to: string
+}
+```
+
+```json
+[
+    {
+        "address": "0x...",
+        "type": "dirty",
+        "txs": [
+            {
+                "txHash": "0x...",
+                "block": 123,
+                "timestamp" : 456,
+                "amount": "0.2",
+                "from": "0x...",
+                "to": "0x..."
+            },
+            {
+                "txHash": "0x...",
+                "block": 123,
+                "timestamp" : 456,
+                "amount": "0.2",
+                "from": "0x...",
+                "to": "0x..."
+            }
+        ]
+    },
+    {
+        "address": "0x...",
+        "type": "clean",
+        "txs": [
+            {
+                "txHash": "0x...",
+                "block": 123,
+                "timestamp" : 456,
+                "amount": "0.2",
+                "from": "0x...",
+                "to": "0x..."
+            },
+            {
+                "txHash": "0x...",
+                "block": 123,
+                "timestamp" : 456,
+                "amount": "0.2",
+                "from": "0x...",
+                "to": "0x..."
+            }
+        ]
+    }
+]
+```
+
+## Flujo
+![[diagrama de flujo]](diagram.png)
 
 # Quickstart (bun.sh)
 To install dependencies:
