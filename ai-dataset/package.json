@@ -2,7 +2,7 @@
 	"name": "ai-dataset",
 	"type": "module",
 	"scripts": {
-		"get-clean-addresses": "bun ./scripts/clean-addresses.ts",
+		"dev": "bun ./scripts/clean-addresses.ts",
 		"create-dataset": "bun ./scripts/dataset.ts"
 	},
 	"devDependencies": {
@@ -10,5 +10,8 @@
 	},
 	"peerDependencies": {
 		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"@supabase/supabase-js": "^2.48.1"
 	}
 }
