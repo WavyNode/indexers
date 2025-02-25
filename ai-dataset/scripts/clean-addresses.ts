@@ -53,4 +53,5 @@ async function saveCleanAddresses(addresses: { from: string; to: string }[]) {
         cleanAddresses = [...new Set([...cleanAddresses, ...filteredAddresses])];
     }
     await saveCleanAddresses(cleanAddresses);
+    console.log("🔥🥵 cleanAddresses");
 })();
