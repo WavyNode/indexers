@@ -3,7 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun ./scripts/clean-addresses.ts",
-		"create-dataset": "bun ./scripts/dataset.ts"
+		"set": "bun ./scripts/dataset.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "latest"
@@ -13,6 +13,9 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.48.1",
-		"dotenv": "^16.4.7"
+		"csv-stringify": "^6.5.2",
+		"dotenv": "^16.4.7",
+		"fs": "^0.0.1-security",
+		"node-fetch": "^3.3.2"
 	}
 }
